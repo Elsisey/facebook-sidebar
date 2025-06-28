@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        padding: 16px;
+        background-color: #f9fafb;
+        color: #1f2937;
+      }
+
+      h2 {
+        margin-bottom: 16px;
+        color: #1d4ed8;
+      }
+
+      label {
+        font-weight: 600;
+        margin: 12px 0 4px;
+        display: block;
+      }
+
+      select, input[type="number"], input[type="date"] {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        background-color: #ffffff;
+      }
+
+      button {
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.3s ease;
+        margin-bottom: 16px;
+      }
+
+      button:hover {
+        background-color: #1e40af;
+      }
+
+      .field-tag {
+        display: inline-block;
+        background-color: #e5e7eb;
+        color: #1f2937;
+        padding: 6px 10px;
+        margin: 4px;
+        border-radius: 20px;
+        font-size: 13px;
+        position: relative;
+        transition: all 0.2s ease;
+      }
+
+      .field-tag span {
+        margin-left: 8px;
+        color: #dc2626;
+        font-weight: bold;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>📊 Facebook Campaigns Report</h2>
+
+    <label>Date Range:</label>
+    <select id="dateRange" onchange="toggleCustom()">
+      <option value="last_3_days">Last 3 Days</option>
+      <option value="last_7_days">Last 7 Days</option>
+      <option value="last_14_days">Last 14 Days</option>
+      <option value="last_30_days">Last 30 Days</option>
+      <option value="custom">Custom Range</option>
+    </select>
+
+    <div id="customDates" style="display:none;">
+      <label>Start Date:</label>
+      <input type="date" id="startDate">
+      <label>End Date:</label>
+      <input type="date" id="endDate">
+    </div>
+
+    <label>Limit (rows):</label>
+    <input type="number" id="limit" value="10" min="1">
+
+    <label>Select Field:</label>
+    <select id="fieldsDropdown">
+      <option value="id">ID</option>
+      <option value="name">Name</option>
+      <option value="status">Status</option>
+      <option value="objective">Objective</option>
+      <option value="created_time">Created Time</option>
+      <option value="start_time">Start Time</option>
+      <option value="stop_time">Stop Time</option>
+      <option value="effective_status">Effective Status</option>
+      <option value="buying_type">Buying Type</option>
+      <option value="daily_budget">Daily Budget</option>
+      <option value="lifetime_budget">Lifetime Budget</option>
+    </select>
+
+    <button onclick="addField()">➕ Add Field</button>
+
+    <div id="selectedFieldsContainer" style="margin-top: 10px; margin-bottom: 20px;"></div>
+
+    <button onclick="runReport()">📥 Import Campaigns</button>
+
+    <script>
+      let selectedFields = ["id", "name", "status"];
+
+      function toggleCustom() {
+        document.getElementById("customDates").style.display =
+          document.getElementById("dateRange").value === "custom" ? "block" : "none";
+      }
+
+      function addField() {
+        const dropdown = document.getElementById("fieldsDropdown");
+        const selectedValue = dropdown.value;
+
+        if (!selectedFields.includes(selectedValue)) {
+          selectedFields.push(selectedValue);
+          updateSelectedFieldsUI();
+        }
+      }
+
+      function updateSelectedFieldsUI() {
+        const container = document.getElementById("selectedFieldsContainer");
+        container.innerHTML = "";
+
+        selectedFields.forEach((field, index) => {
+          const tag = document.createElement("div");
+          tag.className = "field-tag";
+          tag.textContent = field;
+
+          const close = document.createElement("span");
+          close.textContent = "❌";
+          close.onclick = function () {
+            selectedFields.splice(index, 1);
+            updateSelectedFieldsUI();
+          };
+
+          tag.appendChild(close);
+          container.appendChild(tag);
+        });
+      }
+
+      function runReport() {
+        const range = document.getElementById("dateRange").value;
+        const customStart = document.getElementById("startDate").value || "";
+        const customEnd = document.getElementById("endDate").value || "";
+        const limit = parseInt(document.getElementById("limit").value);
+
+        if (selectedFields.length === 0) {
+          alert("⚠️ Please select at least one field.");
+          return;
+        }
+
+        google.script.run.withSuccessHandler(() => {
+          alert("✅ Campaigns imported successfully!");
+        }).fetchCampaigns(range, customStart, customEnd, limit, selectedFields);
+      }
+
+      window.onload = updateSelectedFieldsUI;
+    </script>
+  </body>
+</html>
